@@ -1,0 +1,369 @@
+{
+  "info": {
+    "_postman_id": "c1a2b3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Conversation Session Service",
+    "description": "NestJS + MongoDB take-home assignment API. All 4 endpoints with example payloads.\n\n**Base URL:** http://localhost:3000\n\nSet the `sessionId` collection variable after creating a session to chain requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "call-abc-123",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "1. Create or Upsert Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"call-abc-123\",\n  \"language\": \"en\",\n  \"metadata\": {\n    \"callerId\": \"+1234567890\",\n    \"channel\": \"inbound\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Creates a new session if sessionId does not exist, or returns the existing one.\n\n**Idempotent** — safe to call multiple times with the same sessionId.\n\nExpected response: `200 OK` always (new create or existing return).\n\n**Wrapped response shape:**\n```json\n{\n  \"success\": true,\n  \"data\": { ...session },\n  \"timestamp\": \"...\",\n  \"path\": \"/sessions\"\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "1b. Create Session — French language",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"call-fr-456\",\n  \"language\": \"fr\",\n  \"metadata\": {\n    \"callerId\": \"+33123456789\",\n    \"region\": \"Paris\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Creates a French-language session."
+          },
+          "response": []
+        },
+        {
+          "name": "1c. Create Session — Validation Error (missing language)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"call-bad-789\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Missing `language` field — should return `400 Bad Request` with validation errors."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Add Event to Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "events"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-001\",\n  \"type\": \"user_speech\",\n  \"payload\": {\n    \"text\": \"Hello, how are you?\",\n    \"confidence\": 0.97\n  },\n  \"timestamp\": \"2024-01-01T10:01:00.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Adds an event to the session.\n\n- Session must exist (404 if not)\n- `eventId` must be unique per session (409 on duplicate)\n- Events are immutable\n\nExpected: `201 Created`"
+          },
+          "response": []
+        },
+        {
+          "name": "2b. Add Bot Speech Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "events"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-002\",\n  \"type\": \"bot_speech\",\n  \"payload\": {\n    \"text\": \"I am doing well, thank you! How can I assist you today?\",\n    \"voiceId\": \"en-US-Standard-B\"\n  },\n  \"timestamp\": \"2024-01-01T10:01:05.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Adds a bot_speech event."
+          },
+          "response": []
+        },
+        {
+          "name": "2c. Add System Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "events"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-003\",\n  \"type\": \"system\",\n  \"payload\": {\n    \"action\": \"session_started\",\n    \"version\": \"1.0\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Adds a system event. `timestamp` omitted — defaults to server time."
+          },
+          "response": []
+        },
+        {
+          "name": "2d. Add Duplicate Event (should return 409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "events"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-001\",\n  \"type\": \"user_speech\",\n  \"payload\": {\n    \"text\": \"Duplicate submission\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Submits the same `eventId` again. Should return `409 Conflict` with errorCode `DUPLICATE_EVENT`."
+          },
+          "response": []
+        },
+        {
+          "name": "2e. Add Event to Non-Existent Session (should return 404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/non-existent-session/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "non-existent-session", "events"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"evt-x\",\n  \"type\": \"system\",\n  \"payload\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Session does not exist — should return `404 Not Found` with `SESSION_NOT_FOUND`."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Session with Events (default pagination)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}"]
+            },
+            "description": "Returns session details + events ordered by timestamp ASC.\n\nDefault: `limit=20`, `offset=0`\n\nResponse shape:\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"session\": { ... },\n    \"events\": [ ... ],\n    \"pagination\": {\n      \"total\": 3,\n      \"limit\": 20,\n      \"offset\": 0,\n      \"hasMore\": false\n    }\n  }\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "3b. Get Session with Events (custom pagination)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}?limit=2&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "2"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Returns first 2 events. Use `offset=2` for the next page."
+          },
+          "response": []
+        },
+        {
+          "name": "3c. Get Session with Events — page 2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}?limit=2&offset=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "2"
+                },
+                {
+                  "key": "offset",
+                  "value": "2"
+                }
+              ]
+            },
+            "description": "Returns events 3+ (second page)."
+          },
+          "response": []
+        },
+        {
+          "name": "3d. Get Non-Existent Session (should return 404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/non-existent-session",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "non-existent-session"]
+            },
+            "description": "Should return `404 Not Found` with `SESSION_NOT_FOUND`."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Complete Session",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "complete"]
+            },
+            "description": "Marks session as `completed` and sets `endedAt`.\n\n**Idempotent** — calling again on an already-completed session returns `200 OK`.\n\nReturns `409 Conflict` if session is in `failed` state."
+          },
+          "response": []
+        },
+        {
+          "name": "4b. Complete Session Again (idempotency test — should return 200)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "{{sessionId}}", "complete"]
+            },
+            "description": "Calling complete on an already-completed session. Should return `200 OK` (idempotent, no error)."
+          },
+          "response": []
+        },
+        {
+          "name": "4c. Complete Non-Existent Session (should return 404)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/non-existent-session/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "non-existent-session", "complete"]
+            },
+            "description": "Should return `404 Not Found`."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
